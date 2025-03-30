@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Bookshelf</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2c2c2c;
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .bookshelf {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            background: #3b3b3b;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.1);
+        }
+        .book {
+            width: 50px;
+            height: 150px;
+            background-color: #6b4f4f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            position: relative;
+        }
+        .book:hover {
+            transform: scale(1.1);
+        }
+        .remove-btn {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>My Virtual Bookshelf</h1>
+    <button onclick="clearData()">Clear All Data</button>
+    <div class="bookshelf" id="bookshelf"></div>
+    
+    <div class="controls">
+        <label for="add-book">📖 Add a Book</label>
+        <input type="file" id="add-book" accept="image/*" onchange="addBook(event)">
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", loadBooks);
+        
+        function saveBooks(books) {
+            localStorage.setItem("bookshelf", JSON.stringify(books));
+        }
+        
+        function loadBooks() {
+            let books = JSON.parse(localStorage.getItem("bookshelf")) || [];
+            const bookshelf = document.getElementById("bookshelf");
+            bookshelf.innerHTML = "";
+            books.forEach((bookData, index) => {
+                const book = document.createElement("div");
+                book.classList.add("book");
+                book.style.backgroundImage = bookData.image;
+                book.style.backgroundSize = "cover";
+                book.style.backgroundPosition = "center";
+                book.setAttribute("data-key", bookData.id);
+                book.textContent = bookData.title || "Book";
+                
+                book.onclick = function() {
+                    window.location.href = `page2.html?book=${bookData.id}`;
+                };
+                
+                const removeBtn = document.createElement("button");
+                removeBtn.textContent = "Remove";
+                removeBtn.classList.add("remove-btn");
+                removeBtn.onclick = function(event) {
+                    event.stopPropagation();
+                    books.splice(index, 1);
+                    saveBooks(books);
+                    loadBooks();
+                };
+                
+                book.appendChild(removeBtn);
+                bookshelf.appendChild(book);
+            });
+        }
+        
+        function addBook(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let books = JSON.parse(localStorage.getItem("bookshelf")) || [];
+                    const newBook = {
+                        id: "book_" + new Date().getTime(),
+                        image: `url('${e.target.result}')`,
+                        title: prompt("Enter book title:") || "Book"
+                    };
+                    books.push(newBook);
+                    saveBooks(books);
+                    loadBooks();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function clearData() {
+            localStorage.removeItem("bookshelf");
+            document.getElementById("bookshelf").innerHTML = "";
+        }
+    </script>
+</body>
+</html>
